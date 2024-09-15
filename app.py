@@ -3,6 +3,7 @@ from flask_restx import Api, Resource, Namespace
 import os
 from mongodb_client import AtlasClient
 from dotenv import load_dotenv
+from bson import ObjectId
 
 load_dotenv()
 
@@ -33,16 +34,32 @@ class Leaderboard(Resource):
         players = sorted(players, key=lambda x: x.get("best", 0), reverse=True)
         return players
 
-@player_ns.route('/<int:playerId>')
+@player_ns.route('/<string:playerId>')
 class Player(Resource):
     def get(self, playerId):
-        player = atlas_client.find(COLLECTION_NAME, {"_id": playerId}, limit=1)
+        try:
+            player_id = ObjectId(playerId)
+        except Exception as e:
+            abort(400, description="Invalid player ID format")
+        
+        player = atlas_client.find(COLLECTION_NAME, {"_id": player_id}, limit=1)
         if player:
             player = player[0]
-            player['_id'] = str(player.get('_id')) 
+            player['_id'] = str(player.get('_id'))
             return player
         abort(404, description="Player not found")
-        
+    
+    def delete(self, playerId):
+        try:
+            player_id = ObjectId(playerId)
+        except Exception as e:
+            abort(400, description="Invalid player ID format")
+
+        result = atlas_client.database[COLLECTION_NAME].delete_one({"_id": player_id})
+        if result.deleted_count == 0:
+            abort(404, description="Player not found")
+        return {"success": True}, 204
+    
 @player_ns.route('/<string:player>/<int:best>')
 class PlayerBestScore(Resource):
     def put(self, player, best):
@@ -58,7 +75,6 @@ class PlayerBestScore(Resource):
             }
             atlas_client.database[COLLECTION_NAME].insert_one(new_player)
         return {"success": True}
-
 
 api.add_namespace(player_ns)
 
