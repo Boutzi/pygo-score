@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, abort
+from flask_restx import Api, Resource
 import json
 import os
 from mongodb_client import AtlasClient
@@ -14,6 +15,8 @@ if not ATLAS_URI or not DB_NAME:
     raise ValueError("Environment variables ATLAS_URI, DB_NAME, or COLLECTION_NAME are not defined.")
 
 app = Flask(__name__)
+api = Api(app, version='1.0', title='PyGo Score API',
+          description='A simple API for managing player scores in PyGo')
 
 atlas_client = AtlasClient(ATLAS_URI, DB_NAME)
 atlas_client.ping()
