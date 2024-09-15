@@ -9,9 +9,12 @@ db_mode = "mongo"
 
 app = Flask(__name__)
 
+load_dotenv()
+
 MONGO_URI = os.environ.get("MONGO_URI")
 client = MongoClient(MONGO_URI)
-db = client.get_database()
+db_name = "pygo_score"
+db = client[db_name]
 players_collection = db.players
 
 input_file = "./players.json"
