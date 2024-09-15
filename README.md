@@ -35,7 +35,7 @@ The API will be available at ```http://127.0.0.1:5000```
 # API Endpoints
 You can check the [Swagger Documentation](http://127.0.0.1:5000/) locally, when the server is running.
 
-## /leaderboard
+## /players/leaderboard
 #### Method: GET
 #### Description: Returns the full list of players with their best scores.
 
