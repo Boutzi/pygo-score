@@ -104,9 +104,7 @@ def set_player_best_score(player: str, best: int):
             if player_data["best"] < best:
                 atlas_client.database[COLLECTION_NAME].update_one({"name": player.upper()}, {"$set": {"best": best}})
         else:
-            new_id = len(atlas_client.find(COLLECTION_NAME, {}, limit=0)) + 1
             new_player = {
-                "id": new_id,
                 "name": player.upper(),
                 "best": best
             }
