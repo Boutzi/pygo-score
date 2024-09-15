@@ -1,0 +1,39 @@
+{
+    "players": [
+        {
+            "id": 1,
+            "name": "JOSEPH",
+            "best": 53
+        },
+        {
+            "id": 2,
+            "name": "JORDAN",
+            "best": 23
+        },
+        {
+            "id": 3,
+            "name": "CRYSTAL",
+            "best": 100
+        },
+        {
+            "id": 4,
+            "name": "TEST",
+            "best": 200
+        },
+        {
+            "id": 5,
+            "name": "BOUTZI",
+            "best": 500
+        },
+        {
+            "id": 6,
+            "name": "PAG",
+            "best": 534
+        },
+        {
+            "id": 7,
+            "name": "TOM",
+            "best": 65
+        }
+    ]
+}
