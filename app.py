@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 import json
+import os
 
 app = Flask(__name__)
 
@@ -56,3 +57,7 @@ def get_one_player(playerId: int):
 def set_player_best_score(player: str, best: int):
     write_data(player, best)
     return jsonify({"success": True})
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
