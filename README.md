@@ -35,18 +35,6 @@ The API will be available at ```http://127.0.0.1:5000```
 # API Endpoints
 You can check the [Swagger Documentation](http://127.0.0.1:5000/) locally, when the server is running.
 
-## /players/leaderboard
-#### Method: GET
-#### Description: Returns the full list of players with their best scores.
-
-## /players/<int:playerId>
-#### Method: GET
-#### Description: Returns the player data for the specified playerId.
-
-## /players/<string:player>/<int:best>
-#### Method: PUT
-#### Description: Updates the player's best score if the player exists. Adds a new player if the player is not found.
-
 # MongoDB Config:
 To use MongoDB with this API, follow these steps:
 
