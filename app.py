@@ -9,6 +9,7 @@ db_mode = "mongo"
 
 ATLAS_URI = os.getenv("ATLAS_URI")
 DB_NAME = os.getenv("DB_NAME")
+COLLECTION_NAME = os.getenv("COLLECTION_NAME")
 
 if not ATLAS_URI or not DB_NAME:
     raise ValueError("env. variables are not defiened.")
