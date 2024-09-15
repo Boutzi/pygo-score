@@ -35,7 +35,7 @@ class Leaderboard(Resource):
 @player_ns.route('/<int:playerId>')
 class Player(Resource):
     def get(self, playerId):
-        player = atlas_client.find(COLLECTION_NAME, {"id": playerId}, limit=1)
+        player = atlas_client.find(COLLECTION_NAME, {"_id": playerId}, limit=1)
         if player:
             player = player[0]
             player['_id'] = str(player.get('_id')) 
