@@ -68,19 +68,26 @@ def write_data(player_name, new_best):
 @app.route("/leaderboard", methods=["GET"])
 def get_leaderboard():
     if db_mode == "mongo":
-        players = atlas_client.find(COLLECTION_NAME, {})
+        players = atlas_client.find(COLLECTION_NAME, {}, limit=0)
+        
+        for player in players:
+            player['id'] = str(player.get('id'))
+        
         return jsonify(players)
     elif db_mode == "local":
         return jsonify(players_dict)
     else:
         return "Error: db_mode unknown"
 
+
 @app.route("/players/<int:playerId>", methods=["GET"])
 def get_one_player(playerId: int):
     if db_mode == "mongo":
-        player = atlas_client.find(COLLECTION_NAME, {"id": playerId})
+        player = atlas_client.find(COLLECTION_NAME, {"id": playerId}, limit=1)
         if player:
-            return jsonify(player[0])  # Return the first matching player
+            player = player[0]
+            player['id'] = str(player.get('id'))
+            return jsonify(player)
         return jsonify({"error": "Player not found"}), 404
     elif db_mode == "local":
         player = players_dict.get(playerId)
@@ -90,25 +97,31 @@ def get_one_player(playerId: int):
     else:
         return "Error: db_mode unknown"
 
+
 @app.route("/players/<string:player>/<int:best>", methods=["PUT"])
 def set_player_best_score(player: str, best: int):
     if db_mode == "mongo":
         player_data = atlas_client.find(COLLECTION_NAME, {"name": player.upper()})
         if player_data:
-            if player_data[0]["best"] < best:
-                atlas_client.get_collection(COLLECTION_NAME).update_one({"name": player.upper()}, {"$set": {"best": best}})
+            player_data = player_data[0]
+            if player_data["best"] < best:
+                atlas_client.database[COLLECTION_NAME].update_one({"name": player.upper()}, {"$set": {"best": best}})
         else:
-            new_id = atlas_client.get_collection(COLLECTION_NAME).count_documents({}) + 1
+            new_id = atlas_client.find(COLLECTION_NAME, {}, limit=0)
+            new_id = len(new_id) + 1 if new_id else 1
             new_player = {
                 "id": new_id,
                 "name": player.upper(),
                 "best": best
             }
-            atlas_client.get_collection(COLLECTION_NAME).insert_one(new_player)
+            atlas_client.database[COLLECTION_NAME].insert_one(new_player)
         return jsonify({"success": True})
     elif db_mode == "local":
         write_data(player, best)
         return jsonify({"success": True})
+    else:
+        return "Error: db_mode unknown"
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
