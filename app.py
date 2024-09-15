@@ -1,9 +1,7 @@
 from flask import Flask, jsonify, abort
-from pymongo import MongoClient
 import json
 import os
 from mongodb_client import AtlasClient
-from bson import ObjectId  # Assurez-vous d'importer ObjectId pour les conversions
 
 # db_mode = mongo | db_mode = local
 db_mode = "mongo"
@@ -71,7 +69,7 @@ def get_leaderboard():
     if db_mode == "mongo":
         players = atlas_client.find(COLLECTION_NAME, {}, limit=0)
         for player in players:
-            player['_id'] = str(player.get('_id'))  # Convertir ObjectId en chaîne
+            player['_id'] = str(player.get('_id'))
         return jsonify(players)
     elif db_mode == "local":
         return jsonify(players_dict)
@@ -84,7 +82,7 @@ def get_one_player(playerId: int):
         player = atlas_client.find(COLLECTION_NAME, {"id": playerId}, limit=1)
         if player:
             player = player[0]
-            player['_id'] = str(player.get('_id'))  # Convertir ObjectId en chaîne
+            player['_id'] = str(player.get('_id'))
             return jsonify(player)
         abort(404, description="Player not found")
     elif db_mode == "local":
