@@ -47,6 +47,8 @@ The API will be available at ```http://127.0.0.1:5000```
 #### Description: Updates the player's best score if the player exists. Adds a new player if the player is not found.
 
 # Config:
+
+## local mode :
 You can configure the initial player data and other settings by modifying the players.json file, which holds all player information. The structure looks like this:
 ```json
 {
@@ -71,3 +73,29 @@ You can configure the initial player data and other settings by modifying the pl
 ```
 JSON File Management
 If you wish to pre-load or update player data manually, edit the players.json file located in the project folder. The API automatically reads and writes to this file when new players are added or scores updated.
+
+## MongoDB mode :
+To use MongoDB with this API, follow these steps:
+
+Create a ```.env``` File: Create a ```.env``` file in the project root directory. This file should contain the following environment variables:
+
+```
+ATLAS_URI=your_mongodb_connection_string
+DB_NAME=your_database_name
+COLLECTION_NAME=your_collection_name
+```
+Replace your_mongodb_connection_string, your_database_name, and your_collection_name with your actual MongoDB connection string, database name, and collection name.
+
+### Deploy to Cloud Platforms: If you are deploying the API to cloud platforms like Heroku, AWS, or similar, set these environment variables in your cloud provider's configuration settings.
+
+### Install python-dotenv (Optional): If you are running the application locally and want to load environment variables from the .env file, install python-dotenv:
+```
+pip install python-dotenv
+```
+And modify ```app.py``` to load environment variables from the .env file:
+```
+from dotenv import load_dotenv
+load_dotenv()
+```
+
+By following these steps, you can configure the API to work with MongoDB and ensure that it is correctly set up for both local development and cloud deployment.
