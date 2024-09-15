@@ -1,18 +1,19 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, abort
 from pymongo import MongoClient
 import json
 import os
 from mongodb_client import AtlasClient
+from bson import ObjectId  # Assurez-vous d'importer ObjectId pour les conversions
 
 # db_mode = mongo | db_mode = local
-db_mode = "mongo" 
+db_mode = "mongo"
 
 ATLAS_URI = os.getenv("ATLAS_URI")
 DB_NAME = os.getenv("DB_NAME")
 COLLECTION_NAME = os.getenv("COLLECTION_NAME")
 
 if not ATLAS_URI or not DB_NAME:
-    raise ValueError("env. variables are not defiened.")
+    raise ValueError("Environment variables ATLAS_URI, DB_NAME, or COLLECTION_NAME are not defined.")
 
 app = Flask(__name__)
 
@@ -69,16 +70,13 @@ def write_data(player_name, new_best):
 def get_leaderboard():
     if db_mode == "mongo":
         players = atlas_client.find(COLLECTION_NAME, {}, limit=0)
-        
         for player in players:
-            player['id'] = str(player.get('id'))
-        
+            player['_id'] = str(player.get('_id'))  # Convertir ObjectId en chaîne
         return jsonify(players)
     elif db_mode == "local":
         return jsonify(players_dict)
     else:
-        return "Error: db_mode unknown"
-
+        abort(400, description="Error: db_mode unknown")
 
 @app.route("/players/<int:playerId>", methods=["GET"])
 def get_one_player(playerId: int):
@@ -86,17 +84,16 @@ def get_one_player(playerId: int):
         player = atlas_client.find(COLLECTION_NAME, {"id": playerId}, limit=1)
         if player:
             player = player[0]
-            player['id'] = str(player.get('id'))
+            player['_id'] = str(player.get('_id'))  # Convertir ObjectId en chaîne
             return jsonify(player)
-        return jsonify({"error": "Player not found"}), 404
+        abort(404, description="Player not found")
     elif db_mode == "local":
         player = players_dict.get(playerId)
         if player:
             return jsonify(player)
-        return jsonify({"error": "Player not found"}), 404
+        abort(404, description="Player not found")
     else:
-        return "Error: db_mode unknown"
-
+        abort(400, description="Error: db_mode unknown")
 
 @app.route("/players/<string:player>/<int:best>", methods=["PUT"])
 def set_player_best_score(player: str, best: int):
@@ -107,8 +104,7 @@ def set_player_best_score(player: str, best: int):
             if player_data["best"] < best:
                 atlas_client.database[COLLECTION_NAME].update_one({"name": player.upper()}, {"$set": {"best": best}})
         else:
-            new_id = atlas_client.find(COLLECTION_NAME, {}, limit=0)
-            new_id = len(new_id) + 1 if new_id else 1
+            new_id = len(atlas_client.find(COLLECTION_NAME, {}, limit=0)) + 1
             new_player = {
                 "id": new_id,
                 "name": player.upper(),
@@ -120,8 +116,7 @@ def set_player_best_score(player: str, best: int):
         write_data(player, best)
         return jsonify({"success": True})
     else:
-        return "Error: db_mode unknown"
-
+        abort(400, description="Error: db_mode unknown")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
