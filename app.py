@@ -1,8 +1,18 @@
 from flask import Flask, jsonify
+from pymongo import MongoClient
 import json
 import os
+from dotenv import load_dotenv
+
+# db_mode = mongo | db_mode = local
+db_mode = "mongo" 
 
 app = Flask(__name__)
+
+MONGO_URI = os.environ.get("MONGO_URI")
+client = MongoClient(MONGO_URI)
+db = client.get_database()
+players_collection = db.players
 
 input_file = "./players.json"
 def read_json():
@@ -50,17 +60,46 @@ def write_data(player_name, new_best):
 
 @app.route("/leaderboard", methods=["GET"])
 def get_leaderboard():
-    return jsonify(players_dict)
+    if db_mode == "mongo":
+        players = list(players_collection.find({}, {"_id": 0}))
+        return jsonify(players)
+    elif db_mode == "local":
+        return jsonify(players_dict)
+    else:
+        return "Error: db_mode unknown"
 
 @app.route("/players/<int:playerId>", methods=["GET"])
 def get_one_player(playerId: int):
-    player = players_dict[playerId]
-    return jsonify(player)
+    if db_mode == "mongo":
+        player = players_collection.find_one({"id": playerId}, {"_id": 0})
+        if player:
+            return jsonify(player)
+        return jsonify({"error": "Player not found"}), 404
+    elif db_mode == "local":
+        player = players_dict[playerId]
+        return jsonify(player)
+    else:
+        return "Error: db_mode unknown"
 
 @app.route("/players/<string:player>/<int:best>", methods=["PUT"])
 def set_player_best_score(player: str, best: int):
-    write_data(player, best)
-    return jsonify({"success": True})
+    if db_mode == "mongo":
+        player_data = players_collection.find_one({"name": player.upper()})
+        if player_data:
+            if player_data["best"] < best:
+                players_collection.update_one({"name": player.upper()}, {"$set": {"best": best}})
+        else:
+            new_id = players_collection.count_documents({}) + 1
+            new_player = {
+                "id": new_id,
+                "name": player.upper(),
+                "best": best
+        }
+        players_collection.insert_one(new_player)
+        return jsonify({"success": True})
+    elif db_mode == "local":
+        write_data(player, best)
+        return jsonify({"success": True})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
