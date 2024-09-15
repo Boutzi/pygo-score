@@ -35,6 +35,8 @@ def write_data(player_name, new_best):
                 player["best"] = int(new_best)
                 player_exists = True
                 break
+            else:
+                break
     if not player_exists:
         new_id = max([p["id"] for p in parsed_json["players"]]) + 1
         new_player = {
