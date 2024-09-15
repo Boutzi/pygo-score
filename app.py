@@ -30,6 +30,7 @@ class Leaderboard(Resource):
         players = atlas_client.find(COLLECTION_NAME, {}, limit=0)
         for player in players:
             player['_id'] = str(player.get('_id')) 
+        players = sorted(players, key=lambda x: x.get("best", 0), reverse=True)
         return players
 
 @player_ns.route('/<int:playerId>')
