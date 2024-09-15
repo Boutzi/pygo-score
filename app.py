@@ -67,55 +67,58 @@ def write_data(player_name, new_best):
         parsed_json["players"].append(new_player)
     write_json(parsed_json)
 
-@app.route("/leaderboard", methods=["GET"])
-def get_leaderboard():
-    if db_mode == "mongo":
-        players = atlas_client.find(COLLECTION_NAME, {}, limit=0)
-        for player in players:
-            player['_id'] = str(player.get('_id'))
-        return jsonify(players)
-    elif db_mode == "local":
-        return jsonify(players_dict)
-    else:
-        abort(400, description="Error: db_mode unknown")
-
-@app.route("/players/<int:playerId>", methods=["GET"])
-def get_one_player(playerId: int):
-    if db_mode == "mongo":
-        player = atlas_client.find(COLLECTION_NAME, {"id": playerId}, limit=1)
-        if player:
-            player = player[0]
-            player['_id'] = str(player.get('_id'))
-            return jsonify(player)
-        abort(404, description="Player not found")
-    elif db_mode == "local":
-        player = players_dict.get(playerId)
-        if player:
-            return jsonify(player)
-        abort(404, description="Player not found")
-    else:
-        abort(400, description="Error: db_mode unknown")
-
-@app.route("/players/<string:player>/<int:best>", methods=["PUT"])
-def set_player_best_score(player: str, best: int):
-    if db_mode == "mongo":
-        player_data = atlas_client.find(COLLECTION_NAME, {"name": player.upper()})
-        if player_data:
-            player_data = player_data[0]
-            if player_data["best"] < best:
-                atlas_client.database[COLLECTION_NAME].update_one({"name": player.upper()}, {"$set": {"best": best}})
+@api.route('/leaderboard')
+class Leaderboard(Resource):
+    def get(self):
+        if db_mode == "mongo":
+            players = atlas_client.find(COLLECTION_NAME, {}, limit=0)
+            for player in players:
+                player['_id'] = str(player.get('_id')) 
+            return players
+        elif db_mode == "local":
+            return players_dict
         else:
-            new_player = {
-                "name": player.upper(),
-                "best": best
-            }
-            atlas_client.database[COLLECTION_NAME].insert_one(new_player)
-        return jsonify({"success": True})
-    elif db_mode == "local":
-        write_data(player, best)
-        return jsonify({"success": True})
-    else:
-        abort(400, description="Error: db_mode unknown")
+            abort(400, description="Error: db_mode unknown")
+
+@api.route('/players/<int:playerId>')
+class Player(Resource):
+    def get(self, playerId):
+        if db_mode == "mongo":
+            player = atlas_client.find(COLLECTION_NAME, {"id": playerId}, limit=1)
+            if player:
+                player = player[0]
+                player['_id'] = str(player.get('_id')) 
+                return player
+            abort(404, description="Player not found")
+        elif db_mode == "local":
+            player = players_dict.get(playerId)
+            if player:
+                return player
+            abort(404, description="Player not found")
+        else:
+            abort(400, description="Error: db_mode unknown")
+
+@api.route('/players/<string:player>/<int:best>')
+class PlayerBestScore(Resource):
+    def put(self, player, best):
+        if db_mode == "mongo":
+            player_data = atlas_client.find(COLLECTION_NAME, {"name": player.upper()})
+            if player_data:
+                player_data = player_data[0]
+                if player_data["best"] < best:
+                    atlas_client.database[COLLECTION_NAME].update_one({"name": player.upper()}, {"$set": {"best": best}})
+            else:
+                new_player = {
+                    "name": player.upper(),
+                    "best": best
+                }
+                atlas_client.database[COLLECTION_NAME].insert_one(new_player)
+            return {"success": True}
+        elif db_mode == "local":
+            write_data(player, best)
+            return {"success": True}
+        else:
+            abort(400, description="Error: db_mode unknown")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
