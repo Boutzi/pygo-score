@@ -17,7 +17,7 @@ app = Flask(__name__)
 api = Api(app, version='1.0', title='PyGo Score API',
           description='A simple API for managing player scores in PyGo')
 
-player_ns = Namespace('Players', description='Players management')
+player_ns = Namespace('players', description='Players management')
 app.config['SWAGGER_UI_DOC_EXPANSION'] = 'list'
 
 atlas_client = AtlasClient(ATLAS_URI, DB_NAME)
@@ -32,7 +32,7 @@ class Leaderboard(Resource):
             player['_id'] = str(player.get('_id')) 
         return players
 
-@player_ns.route('/players/<int:playerId>')
+@player_ns.route('/<int:playerId>')
 class Player(Resource):
     def get(self, playerId):
         player = atlas_client.find(COLLECTION_NAME, {"id": playerId}, limit=1)
@@ -42,7 +42,7 @@ class Player(Resource):
             return player
         abort(404, description="Player not found")
         
-@player_ns.route('/players/<string:player>/<int:best>')
+@player_ns.route('/<string:player>/<int:best>')
 class PlayerBestScore(Resource):
     def put(self, player, best):
         player_data = atlas_client.find(COLLECTION_NAME, {"name": player.upper()})
